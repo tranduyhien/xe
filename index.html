@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#7083a1">
 <title>SUBO</title>
 <style>
 /* Man hinh chinh gon (trang thai, nut MO/KHOA, danh sach chia); "Huong dan & Cai dat" xo ra ben duoi */
@@ -116,6 +118,9 @@ input.txt{width:100%;text-align:left;font-family:system-ui,sans-serif}
 .stage img{position:relative;z-index:1;width:100%;display:block}
 html,body{background:#000}
 body.full #home{border-radius:62px}
+/* Toan man hinh nhung chua chui duoc len thanh gio/pin: chi bo 2 goc duoi theo man hinh */
+body.fullb #home{border-radius:0 0 62px 62px}
+body.fullb #edge{border-radius:0 0 62px 62px}
 /* Vien neon quanh ca man hinh */
 body.full #edge{border-radius:62px}
 #edge{position:fixed;inset:0;z-index:5;pointer-events:none;border-radius:0;border:5px solid rgba(255,255,255,.25);transition:border-color .4s,box-shadow .4s}
@@ -145,6 +150,17 @@ body.full #edge{border-radius:62px}
   padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
 .ptop button{width:auto;background:rgba(255,255,255,.15);padding:8px 14px;font-size:15px}
 .ptop b{font-size:19px}
+
+/* Vua khit 1 man hinh: hinh xe tu co lai de luon thay 2 nut */
+#home{height:100vh;height:100dvh;min-height:0}
+.stage{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center;margin:6px -16px 0}
+.stage img{width:100%;height:100%;object-fit:contain}
+.pill2{margin-top:12px}
+.state{margin-top:4px;font-size:clamp(20px,3.2vh,28px)}
+.rbtns{margin-top:10px;padding-top:6px}
+.neon{width:min(126px,16vh);height:min(126px,16vh);font-size:clamp(13px,2vh,17px)}
+.neon svg{width:min(38px,4.6vh);height:min(38px,4.6vh)}
+#home .notice{margin-top:8px}
 </style>
 </head>
 <body>
@@ -756,8 +772,18 @@ function renderHome(){
 const _render = render;
 render = function(){ _render(); renderHome(); };
 $("btnMenu").onclick = () => { document.body.classList.add("pan"); $("panel").hidden = false; $("inCarName").value = nick(carKey()); $("panel").scrollTop = 0; };
+// Thu xin toan man hinh o lan cham dau tien (trinh duyet nao cho phep thi an thanh dia chi)
+document.addEventListener("click", function fsOnce(){
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;   // dang toan man hinh roi
+  const el = document.documentElement;
+  try { const r = (el.requestFullscreen || el.webkitRequestFullscreen || function(){}).call(el); if (r && r.catch) r.catch(() => {}); } catch(e){}
+}, true);
 // Toan man hinh (khong thanh dia chi) -> bo goc theo man hinh; con thanh trinh duyet -> goc vuong
-function chkFull(){ document.body.classList.toggle("full", window.innerHeight >= screen.height - 4 && window.innerWidth >= screen.width - 4); }
+function chkFull(){
+  const w = window.innerWidth >= screen.width - 4, h = screen.height - window.innerHeight;
+  document.body.classList.toggle("full", w && h <= 4);                 // phu ca man hinh: bo 4 goc
+  document.body.classList.toggle("fullb", w && h > 4 && h <= 80);     // chi chua thanh gio/pin: bo 2 goc duoi
+}
 window.addEventListener("resize", chkFull); chkFull();
 $("btnBack").onclick = () => { $("panel").hidden = true; document.body.classList.remove("pan"); };
 $("inCarName").onchange = () => { setNick(carKey(), $("inCarName").value.trim()); render(); };
