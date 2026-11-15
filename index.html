@@ -196,6 +196,15 @@ body.full #edge{border-radius:62px}
   </div>
 </div>
 
+<div id="pasteBox" hidden style="position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;color:#14202b;border-radius:18px;padding:20px;max-width:340px;width:100%;text-align:center">
+    <b style="font-size:18px">Dán tên phím tắt vừa chọn</b>
+    <p id="pasteHint" style="margin:8px 0 14px;font-size:14px;color:#556">Bấm nút bên dưới. Nếu iPhone hiện chữ <b>Dán</b> thì bấm vào chữ đó.</p>
+    <button id="btnPasteNow" style="width:100%;background:#0a6cdb;color:#fff;font-size:17px;padding:14px">📋 Dán tên vừa chọn</button>
+    <button id="btnPasteCancel" style="width:100%;margin-top:8px;background:#e5e8ee;color:#14202b">Bỏ qua</button>
+  </div>
+</div>
+
 <div id="panel" hidden>
 <div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b></div>
 <main>
@@ -310,15 +319,16 @@ body.full #edge{border-radius:62px}
     </details>
 
     <details>
-      <summary><div><b>📲 Nút điều hòa</b><small>Tên phím tắt iPhone cho nút BẬT AC và TẮT AC</small></div></summary>
+      <summary><div><b>📲 Nút điều hòa</b><small>Chọn phím tắt iPhone cho nút BẬT AC và TẮT AC</small></div></summary>
       <div class="body">
-        <div class="guide">Gõ <b>đúng y</b> tên phím tắt trong app <b>Phím tắt</b> của iPhone (cả dấu, chữ hoa, khoảng trắng).</div>
         <label>Nút ❄️ BẬT AC chạy phím tắt:</label>
-        <input class="txt" id="inAcOn" maxlength="60" placeholder="Bật điều hòa">
+        <div class="renrow" style="margin:0"><input class="txt" id="inAcOn" maxlength="60" placeholder="Bật điều hòa"><button class="sm" id="btnPickOn">📋 Chọn</button></div>
         <label>Nút ⏻ TẮT AC chạy phím tắt:</label>
-        <input class="txt" id="inAcOff" maxlength="60" placeholder="Tắt điều hòa">
+        <div class="renrow" style="margin:0"><input class="txt" id="inAcOff" maxlength="60" placeholder="Tắt điều hòa"><button class="sm" id="btnPickOff">📋 Chọn</button></div>
         <button id="btnSavePt">Lưu</button>
         <div class="msg" id="msgPt"></div>
+        <div class="guide" style="margin-top:10px">Bấm <b>📋 Chọn</b> → iPhone hiện danh sách phím tắt của bạn → chọn một cái → tự quay lại đây → bấm <b>Dán tên vừa chọn</b>. Không cần gõ tên.<br>
+        Cần có sẵn phím tắt phụ tên <b>SUBO Chon</b> (làm 1 lần, xem hướng dẫn mình gửi).</div>
       </div>
     </details>
 
@@ -825,6 +835,39 @@ function acRender(){
 function chayPhimTat(ten){ location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent(ten); }
 $("btnAcOn").onclick = () => { ptSet("acst", "on"); acRender(); chayPhimTat(ptGet("acon", "Bật điều hòa")); };
 $("btnAcOff").onclick = () => { ptSet("acst", "off"); acRender(); chayPhimTat(ptGet("acoff", "Tắt điều hòa")); };
+// Chon phim tat tu danh sach: chay phim tat phu "SUBO Chon" (hien danh sach, chep ten vao bo nho tam, mo lai Bluefy)
+let pickKey = "";
+function pickStart(k){ pickKey = k; ptSet("pick", k); chayPhimTat("SUBO Chon"); }
+$("btnPickOn").onclick = () => pickStart("acon");
+$("btnPickOff").onclick = () => pickStart("acoff");
+function pickDone(name){
+  const k = pickKey || ptGet("pick", "");
+  name = (name || "").trim();
+  if (!k || !name) return false;
+  ptSet(k, name); ptSet("pick", ""); pickKey = "";
+  $("pasteBox").hidden = true; acRender();
+  setMsg("msgPt", "Đã chọn: " + name, "ok");
+  return true;
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && (pickKey || ptGet("pick", ""))){
+    $("pasteHint").innerHTML = "Bấm nút bên dưới. Nếu iPhone hiện chữ <b>Dán</b> thì bấm vào chữ đó.";
+    $("pasteBox").hidden = false;
+  }
+});
+$("btnPasteNow").onclick = async () => {
+  try {
+    const t = await navigator.clipboard.readText();
+    if (pickDone(t)) return;
+  } catch(e){}
+  // Khong doc duoc bo nho tam: cho dan tay vao o
+  const k = pickKey || ptGet("pick", "");
+  $("pasteBox").hidden = true; ptSet("pick", ""); pickKey = "";
+  const inp = k === "acoff" ? $("inAcOff") : $("inAcOn");
+  inp.value = ""; inp.focus();
+  setMsg("msgPt", "Giữ ngón tay vào ô vừa trống → bấm Dán → bấm Lưu.", "bad");
+};
+$("btnPasteCancel").onclick = () => { $("pasteBox").hidden = true; ptSet("pick", ""); pickKey = ""; };
 $("btnSavePt").onclick = () => {
   ptSet("acon", $("inAcOn").value.trim()); ptSet("acoff", $("inAcOff").value.trim());
   acRender(); setMsg("msgPt", "Đã lưu.", "");
