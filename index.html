@@ -153,6 +153,8 @@ body.full #edge{border-radius:62px}
 .sneon.b.on{color:#9fe4ff;border-color:#4dc8ff;box-shadow:0 0 14px #2fb4ff,0 0 32px rgba(47,180,255,.55),inset 0 0 12px rgba(47,180,255,.45);text-shadow:0 0 8px #2fb4ff}
 .sneon.t.on{color:#ffd28a;border-color:#ffab3d;box-shadow:0 0 14px #ff9a1f,0 0 32px rgba(255,154,31,.5),inset 0 0 12px rgba(255,154,31,.4);text-shadow:0 0 8px #ff9a1f}
 .sneon:active{transform:scale(.94)}
+.sneon{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.sneon.arm{outline:3px solid #fff}
 /* Bang cai dat (bam 3 cham) */
 #panel{position:fixed;inset:0;z-index:10;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch}
 .ptop{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;background:#0a6cdb;color:#fff;
@@ -327,7 +329,7 @@ body.full #edge{border-radius:62px}
         <div class="renrow" style="margin:0"><input class="txt" id="inAcOff" maxlength="60" placeholder="Tắt điều hòa"><button class="sm" id="btnPickOff">📋 Chọn</button></div>
         <button id="btnSavePt">Lưu</button>
         <div class="msg" id="msgPt"></div>
-        <div class="guide" style="margin-top:10px">Bấm <b>📋 Chọn</b> → iPhone hiện danh sách phím tắt của bạn → chọn một cái → tự quay lại đây → bấm <b>Dán tên vừa chọn</b>. Không cần gõ tên.<br>
+        <div class="guide" style="margin-top:10px">Ngoài màn hình chính: <b>giữ ngón tay 1 giây</b> lên nút BẬT AC / TẮT AC cũng ra danh sách để chọn.<br>Bấm <b>📋 Chọn</b> → iPhone hiện danh sách phím tắt của bạn → chọn một cái → tự quay lại đây → bấm <b>Dán tên vừa chọn</b>. Không cần gõ tên.<br>
         Cần có sẵn phím tắt phụ tên <b>SUBO Chon</b> (làm 1 lần, xem hướng dẫn mình gửi).</div>
       </div>
     </details>
@@ -833,8 +835,16 @@ function acRender(){
   $("inAcOff").value = ptGet("acoff", "Tắt điều hòa");
 }
 function chayPhimTat(ten){ location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent(ten); }
-$("btnAcOn").onclick = () => { ptSet("acst", "on"); acRender(); chayPhimTat(ptGet("acon", "Bật điều hòa")); };
-$("btnAcOff").onclick = () => { ptSet("acst", "off"); acRender(); chayPhimTat(ptGet("acoff", "Tắt điều hòa")); };
+// Cham = chay phim tat; GIU 1 giay = chon phim tat khac cho nut nay
+function acBtn(btn, st, key, def){
+  let t = 0, held = false;
+  const down = () => { held = false; clearTimeout(t); t = setTimeout(() => { held = true; btn.classList.add("arm"); if (navigator.vibrate) navigator.vibrate(30); pickStart(key); }, 900); };
+  const up = () => { clearTimeout(t); setTimeout(() => btn.classList.remove("arm"), 300); };
+  btn.addEventListener("touchstart", down, {passive:true}); btn.addEventListener("mousedown", down);
+  ["touchend","touchcancel","mouseup","mouseleave"].forEach(ev => btn.addEventListener(ev, up));
+  btn.addEventListener("contextmenu", e => e.preventDefault());
+  btn.onclick = () => { if (held){ held = false; return; } ptSet("acst", st); acRender(); chayPhimTat(ptGet(key, def)); };
+}
 // Chon phim tat tu danh sach: chay phim tat phu "SUBO Chon" (hien danh sach, chep ten vao bo nho tam, mo lai Bluefy)
 let pickKey = "";
 function pickStart(k){ pickKey = k; ptSet("pick", k); chayPhimTat("SUBO Chon"); }
@@ -868,6 +878,8 @@ $("btnPasteNow").onclick = async () => {
   setMsg("msgPt", "Giữ ngón tay vào ô vừa trống → bấm Dán → bấm Lưu.", "bad");
 };
 $("btnPasteCancel").onclick = () => { $("pasteBox").hidden = true; ptSet("pick", ""); pickKey = ""; };
+acBtn($("btnAcOn"), "on", "acon", "Bật điều hòa");
+acBtn($("btnAcOff"), "off", "acoff", "Tắt điều hòa");
 $("btnSavePt").onclick = () => {
   ptSet("acon", $("inAcOn").value.trim()); ptSet("acoff", $("inAcOff").value.trim());
   acRender(); setMsg("msgPt", "Đã lưu.", "");
