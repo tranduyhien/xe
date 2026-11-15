@@ -144,6 +144,15 @@ body.full #edge{border-radius:62px}
 .neon.g.on svg{filter:drop-shadow(0 0 6px #22e08a)}.neon.r.on svg{filter:drop-shadow(0 0 6px #ff3b4f)}
 .neon:disabled{opacity:.45}
 .neon:active{transform:scale(.94)}
+/* Nut dieu hoa BAT / TAT (chay Phim tat iPhone), trang thai bang vien neon */
+.sbtns{display:flex;gap:14px;margin-top:-14px;padding-bottom:20px}
+.sneon{width:auto;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:99px;
+  font-size:16px;font-weight:800;background:rgba(10,15,51,.55);border:3px solid;transition:all .35s}
+.sneon.b{color:#4f7f9e;border-color:#2f5a78}
+.sneon.t{color:#8a8fa3;border-color:#555b70}
+.sneon.b.on{color:#9fe4ff;border-color:#4dc8ff;box-shadow:0 0 14px #2fb4ff,0 0 32px rgba(47,180,255,.55),inset 0 0 12px rgba(47,180,255,.45);text-shadow:0 0 8px #2fb4ff}
+.sneon.t.on{color:#ffd28a;border-color:#ffab3d;box-shadow:0 0 14px #ff9a1f,0 0 32px rgba(255,154,31,.5),inset 0 0 12px rgba(255,154,31,.4);text-shadow:0 0 8px #ff9a1f}
+.sneon:active{transform:scale(.94)}
 /* Bang cai dat (bam 3 cham) */
 #panel{position:fixed;inset:0;z-index:10;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch}
 .ptop{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;background:#0a6cdb;color:#fff;
@@ -180,6 +189,10 @@ body.full #edge{border-radius:62px}
   <div class="rbtns">
     <button class="neon g" id="btnMo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>MỞ XE</button>
     <button class="neon r" id="btnKhoa" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>KHÓA XE</button>
+  </div>
+  <div class="sbtns">
+    <button class="sneon b" id="btnAcOn">❄️ BẬT AC</button>
+    <button class="sneon t" id="btnAcOff">⏻ TẮT AC</button>
   </div>
 </div>
 
@@ -293,6 +306,19 @@ body.full #edge{border-radius:62px}
         <div class="row"><label for="kichk">Relay KHÓA nhấn (ms) <small>Giữ lâu xe có thể tự lên kính</small></label><input type="number" id="kichk" min="100" max="15000" step="500"></div>
         <button id="btnSaveTime">Lưu</button>
         <div class="msg" id="msgTime"></div>
+      </div>
+    </details>
+
+    <details>
+      <summary><div><b>📲 Nút điều hòa</b><small>Tên phím tắt iPhone cho nút BẬT AC và TẮT AC</small></div></summary>
+      <div class="body">
+        <div class="guide">Gõ <b>đúng y</b> tên phím tắt trong app <b>Phím tắt</b> của iPhone (cả dấu, chữ hoa, khoảng trắng).</div>
+        <label>Nút ❄️ BẬT AC chạy phím tắt:</label>
+        <input class="txt" id="inAcOn" maxlength="60" placeholder="Bật điều hòa">
+        <label>Nút ⏻ TẮT AC chạy phím tắt:</label>
+        <input class="txt" id="inAcOff" maxlength="60" placeholder="Tắt điều hòa">
+        <button id="btnSavePt">Lưu</button>
+        <div class="msg" id="msgPt"></div>
       </div>
     </details>
 
@@ -785,6 +811,25 @@ function chkFull(){
   document.body.classList.toggle("fullb", w && h > 4 && h <= 80);     // chi chua thanh gio/pin: bo 2 goc duoi
 }
 window.addEventListener("resize", chkFull); chkFull();
+// ---------- nut dieu hoa (chay Phim tat iPhone) ----------
+// App khong doc duoc dieu hoa that cua xe: vien neon hien lan bam gan nhat (BAT hay TAT)
+const ptGet = (k, d) => { try { return localStorage.getItem("pt:" + k) || d; } catch(e){ return d; } };
+const ptSet = (k, v) => { try { v ? localStorage.setItem("pt:" + k, v) : localStorage.removeItem("pt:" + k); } catch(e){} };
+function acRender(){
+  const st = ptGet("acst", "");
+  $("btnAcOn").classList.toggle("on", st === "on");
+  $("btnAcOff").classList.toggle("on", st === "off");
+  $("inAcOn").value = ptGet("acon", "Bật điều hòa");
+  $("inAcOff").value = ptGet("acoff", "Tắt điều hòa");
+}
+function chayPhimTat(ten){ location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent(ten); }
+$("btnAcOn").onclick = () => { ptSet("acst", "on"); acRender(); chayPhimTat(ptGet("acon", "Bật điều hòa")); };
+$("btnAcOff").onclick = () => { ptSet("acst", "off"); acRender(); chayPhimTat(ptGet("acoff", "Tắt điều hòa")); };
+$("btnSavePt").onclick = () => {
+  ptSet("acon", $("inAcOn").value.trim()); ptSet("acoff", $("inAcOff").value.trim());
+  acRender(); setMsg("msgPt", "Đã lưu.", "");
+};
+acRender();
 $("btnBack").onclick = () => { $("panel").hidden = true; document.body.classList.remove("pan"); };
 $("inCarName").onchange = () => { setNick(carKey(), $("inCarName").value.trim()); render(); };
 $("pill").onclick = () => { if (!connected){ $("notice").hidden = true; A.retry(); } };
