@@ -324,9 +324,9 @@ body.full #edge{border-radius:62px}
       <summary><div><b>📲 Nút điều hòa</b><small>Chọn phím tắt iPhone cho nút BẬT AC và TẮT AC</small></div></summary>
       <div class="body">
         <label>Nút ❄️ BẬT AC chạy phím tắt:</label>
-        <div class="renrow" style="margin:0"><input class="txt" id="inAcOn" maxlength="60" placeholder="Bật điều hòa"><button class="sm" id="btnPickOn">📋 Chọn</button></div>
+        <div class="renrow" style="margin:0"><input class="txt" id="inAcOn" maxlength="60" placeholder="(chưa chọn)"><button class="sm" id="btnPickOn">📋 Chọn</button></div>
         <label>Nút ⏻ TẮT AC chạy phím tắt:</label>
-        <div class="renrow" style="margin:0"><input class="txt" id="inAcOff" maxlength="60" placeholder="Tắt điều hòa"><button class="sm" id="btnPickOff">📋 Chọn</button></div>
+        <div class="renrow" style="margin:0"><input class="txt" id="inAcOff" maxlength="60" placeholder="(chưa chọn)"><button class="sm" id="btnPickOff">📋 Chọn</button></div>
         <button id="btnSavePt">Lưu</button>
         <div class="msg" id="msgPt"></div>
         <div class="guide" style="margin-top:10px">Ngoài màn hình chính: <b>giữ ngón tay 1 giây</b> lên nút BẬT AC / TẮT AC cũng ra danh sách để chọn.<br>Bấm <b>📋 Chọn</b> → iPhone hiện danh sách phím tắt của bạn → chọn một cái → tự quay lại đây → bấm <b>Dán tên vừa chọn</b>. Không cần gõ tên.<br>
@@ -831,8 +831,8 @@ function acRender(){
   const st = ptGet("acst", "");
   $("btnAcOn").classList.toggle("on", st === "on");
   $("btnAcOff").classList.toggle("on", st === "off");
-  $("inAcOn").value = ptGet("acon", "Bật điều hòa");
-  $("inAcOff").value = ptGet("acoff", "Tắt điều hòa");
+  $("inAcOn").value = ptGet("acon", "");
+  $("inAcOff").value = ptGet("acoff", "");
 }
 function chayPhimTat(ten){ location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent(ten); }
 // Cham = chay phim tat; GIU 1 giay = chon phim tat khac cho nut nay
@@ -843,7 +843,12 @@ function acBtn(btn, st, key, def){
   btn.addEventListener("touchstart", down, {passive:true}); btn.addEventListener("mousedown", down);
   ["touchend","touchcancel","mouseup","mouseleave"].forEach(ev => btn.addEventListener(ev, up));
   btn.addEventListener("contextmenu", e => e.preventDefault());
-  btn.onclick = () => { if (held){ held = false; return; } ptSet("acst", st); acRender(); chayPhimTat(ptGet(key, def)); };
+  btn.onclick = () => {
+    if (held){ held = false; return; }
+    const ten = ptGet(key, "");
+    if (!ten){ pickStart(key); return; }          // chua chon phim tat nao -> mo danh sach de chon
+    ptSet("acst", st); acRender(); chayPhimTat(ten);
+  };
 }
 // Chon phim tat tu danh sach: chay phim tat phu "SUBO Chon" (hien danh sach, chep ten vao bo nho tam, mo lai Bluefy)
 let pickKey = "";
