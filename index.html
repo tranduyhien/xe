@@ -208,7 +208,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:45</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 18:30</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -291,6 +291,16 @@ body.full #edge{border-radius:62px}
     <details id="dMeas">
       <summary><div><b>📏 Chỉnh khoảng cách</b><small>Đo chỗ mở · đo chỗ khóa cho từng chìa</small></div></summary>
       <div class="body">
+        <div class="guide" style="margin-bottom:10px">
+          <b>Số sóng là gì?</b> Từ 0 đến 100. <b>Số càng LỚN = điện thoại càng GẦN xe</b>, số nhỏ = ở xa.<br>
+          <b>Ô MỞ:</b> sóng đạt tới số này thì gõ kính mới mở được.<br>
+          · Số <b>lớn</b> (vd 70) → phải đứng <b>sát xe</b> mới mở được (an toàn hơn).<br>
+          · Số <b>nhỏ</b> (vd 50) → đứng <b>xa hơn</b> cũng mở được.<br>
+          <b>Ô KHÓA:</b> sóng tụt xuống dưới số này (và giữ đủ thời gian "Chờ khóa") thì xe tự khóa.<br>
+          · Số <b>lớn</b> (vd 55) → mới đi <b>vài bước</b> đã khóa (khóa sớm, nhưng ngồi trong xe dễ bị khóa nhầm).<br>
+          · Số <b>nhỏ</b> (vd 35) → phải đi <b>xa hơn</b> mới khóa (chắc chắn, không khóa nhầm).<br>
+          Số KHÓA phải nhỏ hơn số MỞ ít nhất 8. Dễ nhất: đứng chỗ muốn mở bấm <b>Đo chỗ MỞ</b>, ra chỗ muốn khóa bấm <b>Đo chỗ KHÓA</b>, rồi <b>Lưu</b>.
+        </div>
         <div class="row"><label for="measKey">Chìa cần chỉnh</label><select id="measKey"></select></div>
         <div class="rs" style="margin-top:0"><small>Sóng chìa này (mạch đo được)</small><b id="measNow">—</b></div>
         <div class="meas">
@@ -302,8 +312,8 @@ body.full #edge{border-radius:62px}
           <div class="box"><small>Chỗ khóa</small><b id="vFar">—</b></div>
         </div>
         <div class="msg" id="msgMeas"></div>
-        <div class="row"><label for="inMo">MỞ khi sóng từ <small>0–100 · số càng NHỎ = mở từ càng XA</small></label><input type="number" min="0" max="100" id="inMo"></div>
-        <div class="row"><label for="inKh">KHÓA khi sóng dưới <small>Nhỏ hơn số MỞ ít nhất 8</small></label><input type="number" min="0" max="100" id="inKh"></div>
+        <div class="row"><label for="inMo">MỞ khi sóng từ <small>Số LỚN = phải đứng sát xe · số NHỎ = đứng xa vẫn mở</small></label><input type="number" min="0" max="100" id="inMo"></div>
+        <div class="row"><label for="inKh">KHÓA khi sóng dưới <small>Số LỚN = đi vài bước đã khóa · số NHỎ = đi xa mới khóa</small></label><input type="number" min="0" max="100" id="inKh"></div>
         <button id="btnSaveMeas">Lưu khoảng cách</button>
       </div>
     </details>
