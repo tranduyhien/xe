@@ -404,7 +404,12 @@ const A = window.Android || (() => {
     clearTimeout(retryT);
     st("connecting");
     const g = await dev.gatt.connect();
-    const sv = await g.getPrimaryService(SVC);
+    // iPhone co the con nho danh sach dich vu cu cua mach -> thu lai vai lan (mach 3.2 bao iPhone doc lai)
+    let sv = null;
+    for (let k = 0; k < 4 && !sv; k++){
+      try { sv = await g.getPrimaryService(SVC); }
+      catch(e){ if (k === 3) throw new Error("Không thấy cổng lệnh trên mạch. Kiểm tra mạch đã nạp bản 3.2 mới nhất."); await new Promise(r => setTimeout(r, 2500)); }
+    }
     rx = await sv.getCharacteristic(RXU);
     const tx = await sv.getCharacteristic(TXU);
     tx.addEventListener("characteristicvaluechanged", ev => {
