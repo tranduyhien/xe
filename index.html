@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:15</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:15</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -434,16 +434,7 @@ const A = window.Android || (() => {
     if (s === "CHO_GHEP"){ window.onLine("Đang ghép điện thoại này… chờ vài giây"); setTimeout(() => api.send("xem"), 2500); return; }
     window.onLine && window.onLine(s);
   }
-  let opening = false;
   async function open(){
-    if (opening) throw new Error("dang ket noi");
-    opening = true;
-    try { return await open2(); }
-    catch(e){ try { if (dev && dev.gatt.connected) dev.gatt.disconnect(); } catch(_){}   // bi tu choi giua chung -> ngat han de lan sau noi lai tu dau
-              throw e; }
-    finally { opening = false; }
-  }
-  async function open2(){
     clearTimeout(retryT);
     st("connecting");
     const g = await dev.gatt.connect();
@@ -459,7 +450,6 @@ const A = window.Android || (() => {
     tx.addEventListener("characteristicvaluechanged", ev => { gotAny = true; feed(dec.decode(ev.target.value)); });
     try { await tx.startNotifications(); } catch(e){}
     q = []; waiting = false; buf = ""; gotAny = false;
-    lastData = Date.now();   // cho mach vai giay de tra loi truoc khi coi la ket noi chet
     st("connected");
     if (lsGet("xe_poll") === "1") startPoll();
     else {
@@ -468,9 +458,7 @@ const A = window.Android || (() => {
       clearTimeout(checkT); checkT = setTimeout(() => { if (rx && !gotAny) startPoll(); }, 3000);
     }
   }
-  let lastData = 0;
   function feed(t){
-    lastData = Date.now();
     buf += t;
     let i; while ((i = buf.indexOf("\n")) >= 0){ const s = buf.slice(0, i).replace(/\r$/, ""); buf = buf.slice(i + 1); if (s) line(s); }
   }
@@ -493,7 +481,7 @@ const A = window.Android || (() => {
   function onDisc(){
     rx = null; txc = null; polling = false; clearTimeout(pollT); clearTimeout(checkT);
     if (!auto){ st("paused"); return; }
-    if (!everOk){ st("paused"); return; }   // chua nhan duoc gi: de vong tu ket noi thu lai sau
+    if (!everOk){ auto = false; window.onLine && window.onLine("ERR_KHOA"); st("paused"); return; }
     st("disconnected");
     retryT = setTimeout(() => open().catch(onDisc), 2500);
   }
@@ -502,38 +490,29 @@ const A = window.Android || (() => {
     try {
       // Mac dinh loc theo cong lenh: iPhone dang giu ket noi voi mach thi chi tim duoc cach nay (khong hien trong quet thuong)
       const opt = all ? { acceptAllDevices:true, optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] }
-                      : { filters:[{ namePrefix:"XE-KHOA" }, { services:[SVC] }], optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] };
+                      : { filters:[{ services:["0000fff0-0000-1000-8000-00805f9b34fb"] }, { services:[SVC] }, { namePrefix:"XE-KHOA" }], optionalServices:[SVC] };
       const d = await navigator.bluetooth.requestDevice(opt);
       if (dev && dev !== d && dev.gatt.connected){ auto = false; dev.gatt.disconnect(); }
       dev = d; everOk = false; auto = true;
       try { localStorage.setItem("xe_dev", d.id); } catch(e){}
       dev.addEventListener("gattserverdisconnected", onDisc);
       await open();
-    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA? Rút điện mạch, bấm KẾT NỐI, rồi cắm điện lại: XE-KHOA hiện ra thì chọn ngay. (Giữ nút KẾT NỐI 1 giây để hiện tất cả thiết bị.)"); }
+    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA? Rút điện mạch, bấm Kết nối xe, rồi cắm điện lại: XE-KHOA hiện ra thì chọn ngay."); }
   }
   const api = {
     send(c){ q.push(c); pump(); },
-    retry(all){ auto = true; everOk = false; choose(!!all); },   // bam Ket noi: chi hien XE-KHOA; giu 1 giay: hien tat ca   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
+    retry(){ auto = true; everOk = false; choose(true); },   // bam Ket noi: hien tat ca thiet bi xung quanh de chon XE-KHOA   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
     disconnect(){ auto = false; clearTimeout(retryT); if (dev && dev.gatt.connected) dev.gatt.disconnect(); },
     setAuto(b){ auto = !!b; },
     choose,
-    // Tu ket noi lai (khong can bam): dung thiet bi da chon truoc do
-    async autoConnect(){
-      if (rx || opening || !auto) return false;
-      return api.tryRemembered();   // lay lai thiet bi moi tu Bluefy (giong luc tai lai trang)
-    },
-    isUp(){ return !!rx; },
-    // Con song that khong: mach gui trang thai moi giay, qua 4 giay khong nghe gi la ket noi da chet
-    alive(){ return !!rx && Date.now() - lastData < 4000; },
     async tryRemembered(){
       try {
         if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
         const id = localStorage.getItem("xe_dev"); const list = await navigator.bluetooth.getDevices();
         const d = list.find(x => x.id === id) || list.find(x => (x.name||"").startsWith("XE-KHOA"));
         if (!d) return false;
-        if (dev !== d){ dev = d; dev.addEventListener("gattserverdisconnected", onDisc); }
-        await open(); return true;
-      } catch(e){ st("paused"); return false; }
+        dev = d; dev.addEventListener("gattserverdisconnected", onDisc); await open(); return true;
+      } catch(e){ return false; }
     }
   };
   return api;
@@ -581,16 +560,7 @@ window.onState = (st, name) => {
 function showNotice(title, text){
   $("noticeTitle").textContent = title; $("noticeText").textContent = text; $("notice").hidden = false;
 }
-(function(){
-  // Cham KET NOI: danh sach chi co XE-KHOA. Giu 1 giay: hien tat ca thiet bi (du phong)
-  const b = $("btnRetry"); let t = 0, held = false;
-  const down = () => { held = false; clearTimeout(t); t = setTimeout(() => { held = true; b.classList.add("arm"); b.textContent = "THẢ TAY: TẤT CẢ"; }, 900); };
-  const up = () => clearTimeout(t);
-  b.addEventListener("touchstart", down, {passive:true}); b.addEventListener("mousedown", down);
-  ["touchend","touchcancel","mouseup","mouseleave"].forEach(ev => b.addEventListener(ev, up));
-  b.addEventListener("contextmenu", e => e.preventDefault());
-  b.onclick = () => { const all = held; held = false; b.classList.remove("arm"); $("notice").hidden = true; A.retry(all); render(); };
-})();
+$("btnRetry").onclick = () => { $("notice").hidden = true; A.retry(); };
 
 // ---------- dong chu tu mach ----------
 window.onLine = s => {
