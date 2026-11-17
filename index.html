@@ -208,7 +208,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:40</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:45</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -459,7 +459,7 @@ const A = window.Android || (() => {
     try {
       // Mac dinh loc theo cong lenh: iPhone dang giu ket noi voi mach thi chi tim duoc cach nay (khong hien trong quet thuong)
       const opt = all ? { acceptAllDevices:true, optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] }
-                      : { filters:[{ services:[SVC] }, { namePrefix:"XE-KHOA" }], optionalServices:["0000fff0-0000-1000-8000-00805f9b34fb"] };
+                      : { filters:[{ services:["0000fff0-0000-1000-8000-00805f9b34fb"] }, { services:[SVC] }, { namePrefix:"XE-KHOA" }], optionalServices:[SVC] };
       const d = await navigator.bluetooth.requestDevice(opt);
       if (dev && dev !== d && dev.gatt.connected){ auto = false; dev.gatt.disconnect(); }
       dev = d; everOk = false; auto = true;
