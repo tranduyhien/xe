@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:00</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:05</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -459,6 +459,7 @@ const A = window.Android || (() => {
     tx.addEventListener("characteristicvaluechanged", ev => { gotAny = true; feed(dec.decode(ev.target.value)); });
     try { await tx.startNotifications(); } catch(e){}
     q = []; waiting = false; buf = ""; gotAny = false;
+    lastData = Date.now();   // cho mach vai giay de tra loi truoc khi coi la ket noi chet
     st("connected");
     if (lsGet("xe_poll") === "1") startPoll();
     else {
@@ -467,7 +468,9 @@ const A = window.Android || (() => {
       clearTimeout(checkT); checkT = setTimeout(() => { if (rx && !gotAny) startPoll(); }, 3000);
     }
   }
+  let lastData = 0;
   function feed(t){
+    lastData = Date.now();
     buf += t;
     let i; while ((i = buf.indexOf("\n")) >= 0){ const s = buf.slice(0, i).replace(/\r$/, ""); buf = buf.slice(i + 1); if (s) line(s); }
   }
@@ -520,6 +523,8 @@ const A = window.Android || (() => {
       return api.tryRemembered();   // lay lai thiet bi moi tu Bluefy (giong luc tai lai trang)
     },
     isUp(){ return !!rx; },
+    // Con song that khong: mach gui trang thai moi giay, qua 4 giay khong nghe gi la ket noi da chet
+    alive(){ return !!rx && Date.now() - lastData < 4000; },
     async tryRemembered(){
       try {
         if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
@@ -1061,13 +1066,15 @@ render();
 })();
 // Tu ket noi lai: moi lan mo lai Bluefy, va moi 3 giay khi dang mat ket noi
 if (!window.Android && navigator.bluetooth){
-  const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); };
+  const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); else if (A.alive && !A.alive() && A.isUp()) location.reload(); };
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden"){ hiddenAt = Date.now(); return; }
     // Mo lai Bluefy ma chua ket noi: tai lai trang (cach nay luon noi duoc)
-    if (hiddenAt && Date.now() - hiddenAt > 2000 && A.isUp && !A.isUp() && !(typeof demoMode !== "undefined" && demoMode) && $("pasteBox").hidden){
-      location.reload(); return;
+    if (hiddenAt && Date.now() - hiddenAt > 2000 && !(typeof demoMode !== "undefined" && demoMode) && $("pasteBox").hidden){
+      // Quay lai tu nen: cho 1.5 giay xem ket noi con song khong; khong nghe mach noi gi -> tai lai trang
+      setTimeout(() => { if (!A.alive()) location.reload(); }, 1500);
+      return;
     }
     setTimeout(tryAuto, 400);
   });
