@@ -156,6 +156,14 @@ body.full #edge{border-radius:62px}
 .sneon:active{transform:scale(.94)}
 .sneon{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .sneon.arm{outline:3px solid #fff}
+/* Hang nut KET NOI / CHAY THU duoi nut dieu hoa, cung kich thuoc */
+.sneon{width:150px;min-width:0}
+.sbtns{padding-bottom:10px}
+.sb2{margin-top:0;padding-bottom:22px}
+.sneon.k{color:#c9d3ff;border-color:#7c8be0}
+.sneon.k.on{color:#d9fff0;border-color:#4dff9f;box-shadow:0 0 12px #22e08a,inset 0 0 10px rgba(34,224,138,.4)}
+.sneon.d{color:#e8dcb0;border-color:#a8955a}
+.sneon.d.on{color:#ffe9a8;border-color:#f0b429;box-shadow:0 0 12px #f0b429,inset 0 0 10px rgba(240,180,41,.4)}
 /* Bang cai dat (bam 3 cham) */
 #panel{position:fixed;inset:0;z-index:10;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch}
 .ptop{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;background:#0a6cdb;color:#fff;
@@ -187,7 +195,6 @@ body.full #edge{border-radius:62px}
   <div class="state" id="homeState">—</div>
   <div class="notice" id="notice" hidden>
     <b id="noticeTitle"></b><span id="noticeText"></span>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="sm" id="btnRetry">Thử lại</button><button class="sm ghost" id="btnDemo" style="color:#14202b">▶ Chạy thử (không cần xe)</button></div>
   </div>
   <div class="rbtns">
     <button class="neon g" id="btnMo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>MỞ XE</button>
@@ -196,6 +203,10 @@ body.full #edge{border-radius:62px}
   <div class="sbtns">
     <button class="sneon b" id="btnAcOn">❄️ BẬT AC</button>
     <button class="sneon t" id="btnAcOff">⏻ TẮT AC</button>
+  </div>
+  <div class="sbtns sb2">
+    <button class="sneon k" id="btnRetry">🔗 KẾT NỐI</button>
+    <button class="sneon d" id="btnDemo">▶ CHẠY THỬ</button>
   </div>
 </div>
 
@@ -209,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:00</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:10</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -529,7 +540,7 @@ window.onState = (st, name) => {
     connecting:   ["busy", "Đang kết nối…", name],
     connected:    ["ok",   "Đã kết nối", name],
     disconnected: ["",     "Mất kết nối", "Đang tìm lại…"],
-    paused:       ["",     "Chưa kết nối", "Bấm Thử lại khi đã sẵn sàng"],
+    paused:       ["",     "Chưa kết nối", "Bấm KẾT NỐI khi đã sẵn sàng"],
     bt_off:       ["",     "Bluetooth đang tắt", "Bấm Cho phép để bật Bluetooth"],
     no_perm:      ["",     "Chưa cấp quyền", "Cài đặt → Ứng dụng → SUBO → Quyền → cho phép Thiết bị lân cận"],
     no_bt:        ["",     "Điện thoại không có Bluetooth", ""]
@@ -857,6 +868,9 @@ $("btnExit").onclick = () => send("thoat");
 // ---------- man hinh chinh ----------
 const carKey = () => cfg.ten || curName || "XE-KHOA";
 function renderHome(){
+  { const k = $("btnRetry"), on = connected && allowed && !(typeof demoMode !== "undefined" && demoMode);
+    k.classList.toggle("on", on); const dm = typeof demoMode !== "undefined" && demoMode; k.textContent = on ? "✓ ĐÃ KẾT NỐI" : (connected && !dm ? "… ĐANG NỐI" : "🔗 KẾT NỐI");
+    $("btnDemo").classList.toggle("on", typeof demoMode !== "undefined" && demoMode); }
   $("carName").textContent = nick(carKey()) || "VF8";
   if ($("carName").dataset.demo) $("carName").textContent += " · CHẠY THỬ";
   const on = connected && allowed;
@@ -1029,13 +1043,11 @@ render();
 })();
 // Ban web: khong tu bat Bluetooth duoc khi chua bam -> hien nut Ket noi
 if (!window.Android){
-  $("btnRetry").textContent = "🔗 Kết nối xe";
   if (/[?&]demo/.test(location.search)) startDemo(); else
   A.tryRemembered().then(ok => {
     if (ok) return;
     onState("paused");
-    if (navigator.bluetooth) showNotice("Chưa kết nối xe", "Đứng gần xe rồi bấm nút bên dưới. Bấm nút bên dưới rồi chọn XE-KHOA trong danh sách.");
-    else showNotice("Trình duyệt này không có Bluetooth", "Trên iPhone: cài app Bluefy (miễn phí) rồi mở trang này bằng Bluefy.");
+    if (!navigator.bluetooth) showNotice("Trình duyệt này không có Bluetooth", "Trên iPhone: cài app Bluefy (miễn phí) rồi mở trang này bằng Bluefy.");
   });
 }
 </script>
