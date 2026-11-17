@@ -186,7 +186,7 @@ body.full #edge{border-radius:62px}
   <div class="state" id="homeState">—</div>
   <div class="notice" id="notice" hidden>
     <b id="noticeTitle"></b><span id="noticeText"></span>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="sm" id="btnRetry">Thử lại</button><button class="sm ghost" id="btnDemo" style="color:#14202b">▶ Chạy thử (không cần xe)</button></div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="sm" id="btnRetry">Thử lại</button><button class="sm ghost" id="btnAll" style="color:#14202b">🔍 Hiện tất cả thiết bị</button><button class="sm ghost" id="btnDemo" style="color:#14202b">▶ Chạy thử (không cần xe)</button></div>
   </div>
   <div class="rbtns">
     <button class="neon g" id="btnMo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>MỞ XE</button>
@@ -208,7 +208,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:30</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:40</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -454,16 +454,19 @@ const A = window.Android || (() => {
     st("disconnected");
     retryT = setTimeout(() => open().catch(onDisc), 2500);
   }
-  async function choose(){
+  async function choose(all){
     if (!navigator.bluetooth){ st("no_bt"); showNotice("Trình duyệt này không có Bluetooth", "Trên iPhone: cài app Bluefy (miễn phí) rồi mở trang này bằng Bluefy."); return; }
     try {
-      const d = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] });   // hien tat ca, chon XE-KHOA (loc theo ten bi Bluefy bo sot)
+      // Mac dinh loc theo cong lenh: iPhone dang giu ket noi voi mach thi chi tim duoc cach nay (khong hien trong quet thuong)
+      const opt = all ? { acceptAllDevices:true, optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] }
+                      : { filters:[{ services:[SVC] }, { namePrefix:"XE-KHOA" }], optionalServices:["0000fff0-0000-1000-8000-00805f9b34fb"] };
+      const d = await navigator.bluetooth.requestDevice(opt);
       if (dev && dev !== d && dev.gatt.connected){ auto = false; dev.gatt.disconnect(); }
       dev = d; everOk = false; auto = true;
       try { localStorage.setItem("xe_dev", d.id); } catch(e){}
       dev.addEventListener("gattserverdisconnected", onDisc);
       await open();
-    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); }
+    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA trong danh sách? Bấm \"Hiện tất cả thiết bị\" bên dưới."); }
   }
   const api = {
     send(c){ q.push(c); pump(); },
@@ -973,6 +976,7 @@ function startDemo(){
   }, 1000);
 }
 $("btnDemo").onclick = startDemo;
+$("btnAll").onclick = () => { $("notice").hidden = true; A.choose(true); };
 renderKeyEdit();
 render();
 // Ban web: khong tu bat Bluetooth duoc khi chua bam -> hien nut Ket noi
