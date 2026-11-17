@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:50</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:55</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -1060,12 +1060,12 @@ render();
     }
   }).catch(() => {});
 })();
-// Tu ket noi lai: moi lan mo lai Bluefy, va moi 6 giay khi dang mat ket noi
+// Tu ket noi lai: moi lan mo lai Bluefy, va moi 3 giay khi dang mat ket noi
 if (!window.Android && navigator.bluetooth){
   const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); };
   document.addEventListener("visibilitychange", () => setTimeout(tryAuto, 400));
   window.addEventListener("pageshow", () => setTimeout(tryAuto, 400));
-  setInterval(tryAuto, 6000);
+  setInterval(tryAuto, 3000);
 }
 // Ban web: khong tu bat Bluetooth duoc khi chua bam -> hien nut Ket noi
 if (!window.Android){
