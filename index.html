@@ -208,7 +208,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 18:30</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 18:45</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -253,6 +253,15 @@ body.full #edge{border-radius:62px}
   <button class="toggle" id="btnToggle" hidden>📖 Hướng dẫn &amp; Cài đặt ▼</button>
 
   <!-- CAI DAT (xo ra) -->
+  <div class="card">
+    <h3>🕒 Giờ của mạch</h3>
+    <div class="rs" style="margin-top:0;align-items:baseline"><small>Mạch đang chạy giờ</small><b id="clkMach" style="font-size:22px;font-variant-numeric:tabular-nums">—</b></div>
+    <div class="rs" style="margin-top:2px"><small>Giờ điện thoại</small><small id="clkPhone" style="font-variant-numeric:tabular-nums">—</small></div>
+    <button id="btnSetClock" style="margin-top:8px">Chỉnh giờ mạch theo điện thoại</button>
+    <div class="msg" id="msgClock"></div>
+    <small style="color:var(--mut)">Mạch cần đúng giờ để bật đèn pha 17:30–07:00 và ghi lịch sử có ngày giờ. Rút điện mạch là mất giờ, phải chỉnh lại (box Android cũng tự gửi giờ khi ở gần).</small>
+  </div>
+
   <div class="card" id="settings">
 
     <div class="guide" style="margin-bottom:6px">
@@ -572,6 +581,8 @@ window.onLine = s => {
     const cb = +e.cb || 0; $("exCb").textContent = cb ? cb + " lần" : (e.mpu === "0" ? "Không có cảm biến" : e.mpu === "2" ? "Lỗi cảm biến" : "Không");
     $("exCb").className = cb || e.mpu === "2" ? "bad" : "ok";
     $("exGio").textContent = !e.gio || e.gio === "-" ? "chưa có (box chưa gửi giờ)" : e.gio.replace("_", " ");
+    $("clkMach").textContent = !e.gio || e.gio === "-" ? "chưa có giờ" : e.gio.replace("_", "  ");
+    $("clkMach").className = !e.gio || e.gio === "-" ? "bad" : "";
     return;
   }
   if (s.startsWith("ERR_KHOA")){
@@ -608,7 +619,7 @@ function render(){
   // nut
   $("btnMo").disabled = !(connected && allowed);
   $("btnKhoa").disabled = !(connected && allowed);
-  ["btnAddB","btnAddP","btnSaveMeas","btnSaveTime","btnSaveAdv","btnTM","btnTK","btnExit","btnNear","btnFar","btnPair","btnCmd"].forEach(id => $(id).disabled = !(connected && allowed));
+  ["btnAddB","btnAddP","btnSaveMeas","btnSaveTime","btnSaveAdv","btnTM","btnTK","btnExit","btnNear","btnFar","btnPair","btnCmd","btnSetClock"].forEach(id => $(id).disabled = !(connected && allowed));
 
   // ten mach + che do cai dat
   if (connected && cfg.ten){
@@ -817,6 +828,21 @@ function saveFields(list, msgId){
   setMsg(msgId, n ? "✓ Đã lưu " + n + " thay đổi" : "Không có gì thay đổi", "ok");
 }
 $("btnSaveTime").onclick = () => saveFields(["cho","xn","kich","kichk"], "msgTime");
+// ---------- gio cua mach ----------
+const pad2 = n => String(n).padStart(2, "0");
+setInterval(() => { const d = new Date(); $("clkPhone").textContent = pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds()) + "  " + pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + "/" + d.getFullYear(); }, 1000);
+let clockT = 0;
+$("btnSetClock").onclick = () => {
+  clearTimeout(clockT);
+  // lenh "time" cua mach chi nhan den phut -> cho tron phut roi gui de mach dung tung giay
+  const tick = () => {
+    const d = new Date(), sec = d.getSeconds();
+    if (sec !== 0){ setMsg("msgClock", "Đang chờ tròn phút để chỉnh cho chính xác… còn " + (60 - sec) + " giây", ""); clockT = setTimeout(tick, 250); return; }
+    send("time " + d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()));
+    setMsg("msgClock", "✓ Đã chỉnh giờ mạch theo điện thoại", "ok");
+  };
+  tick();
+};
 $("btnSaveAdv").onclick = () => saveFields(["gioden","gonhay","gokhoa","khoanhanh","chuyendi","chayrung","imlang","godai","cuanhay","nhatky"], "msgAdv");
 $("btnPair").onclick = () => { send("p"); setMsg("msgKeys", "Mạch đang chờ ghép 2 phút. Làm bước 2 trên máy mới.", ""); };
 document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => send(b.dataset.cmd));
