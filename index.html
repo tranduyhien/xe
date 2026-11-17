@@ -426,7 +426,7 @@ const A = window.Android || (() => {
   async function choose(){
     if (!navigator.bluetooth){ st("no_bt"); showNotice("Trình duyệt này không có Bluetooth", "Trên iPhone: cài app Bluefy (miễn phí) rồi mở trang này bằng Bluefy."); return; }
     try {
-      const d = await navigator.bluetooth.requestDevice({ filters:[{ namePrefix:"XE-KHOA" }, { services:[SVC] }], optionalServices:[SVC] });
+      const d = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] });   // hien tat ca, chon XE-KHOA (loc theo ten bi Bluefy bo sot)
       if (dev && dev !== d && dev.gatt.connected){ auto = false; dev.gatt.disconnect(); }
       dev = d; everOk = false; auto = true;
       try { localStorage.setItem("xe_dev", d.id); } catch(e){}
@@ -951,7 +951,7 @@ if (!window.Android){
   A.tryRemembered().then(ok => {
     if (ok) return;
     onState("paused");
-    if (navigator.bluetooth) showNotice("Chưa kết nối xe", "Đứng gần xe rồi bấm nút bên dưới. Lần đầu: chọn XE-KHOA trong danh sách.");
+    if (navigator.bluetooth) showNotice("Chưa kết nối xe", "Đứng gần xe rồi bấm nút bên dưới. Bấm nút bên dưới rồi chọn XE-KHOA trong danh sách.");
     else showNotice("Trình duyệt này không có Bluetooth", "Trên iPhone: cài app Bluefy (miễn phí) rồi mở trang này bằng Bluefy.");
   });
 }
