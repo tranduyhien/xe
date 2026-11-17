@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:10</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:15</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -502,18 +502,18 @@ const A = window.Android || (() => {
     try {
       // Mac dinh loc theo cong lenh: iPhone dang giu ket noi voi mach thi chi tim duoc cach nay (khong hien trong quet thuong)
       const opt = all ? { acceptAllDevices:true, optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] }
-                      : { filters:[{ services:["0000fff0-0000-1000-8000-00805f9b34fb"] }, { services:[SVC] }, { namePrefix:"XE-KHOA" }], optionalServices:[SVC] };
+                      : { filters:[{ namePrefix:"XE-KHOA" }, { services:[SVC] }], optionalServices:[SVC, "0000fff0-0000-1000-8000-00805f9b34fb"] };
       const d = await navigator.bluetooth.requestDevice(opt);
       if (dev && dev !== d && dev.gatt.connected){ auto = false; dev.gatt.disconnect(); }
       dev = d; everOk = false; auto = true;
       try { localStorage.setItem("xe_dev", d.id); } catch(e){}
       dev.addEventListener("gattserverdisconnected", onDisc);
       await open();
-    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA? Rút điện mạch, bấm Kết nối xe, rồi cắm điện lại: XE-KHOA hiện ra thì chọn ngay."); }
+    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA? Rút điện mạch, bấm KẾT NỐI, rồi cắm điện lại: XE-KHOA hiện ra thì chọn ngay. (Giữ nút KẾT NỐI 1 giây để hiện tất cả thiết bị.)"); }
   }
   const api = {
     send(c){ q.push(c); pump(); },
-    retry(){ auto = true; everOk = false; choose(true); },   // bam Ket noi: hien tat ca thiet bi xung quanh de chon XE-KHOA   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
+    retry(all){ auto = true; everOk = false; choose(!!all); },   // bam Ket noi: chi hien XE-KHOA; giu 1 giay: hien tat ca   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
     disconnect(){ auto = false; clearTimeout(retryT); if (dev && dev.gatt.connected) dev.gatt.disconnect(); },
     setAuto(b){ auto = !!b; },
     choose,
@@ -581,7 +581,16 @@ window.onState = (st, name) => {
 function showNotice(title, text){
   $("noticeTitle").textContent = title; $("noticeText").textContent = text; $("notice").hidden = false;
 }
-$("btnRetry").onclick = () => { $("notice").hidden = true; A.retry(); };
+(function(){
+  // Cham KET NOI: danh sach chi co XE-KHOA. Giu 1 giay: hien tat ca thiet bi (du phong)
+  const b = $("btnRetry"); let t = 0, held = false;
+  const down = () => { held = false; clearTimeout(t); t = setTimeout(() => { held = true; b.classList.add("arm"); b.textContent = "THẢ TAY: TẤT CẢ"; }, 900); };
+  const up = () => clearTimeout(t);
+  b.addEventListener("touchstart", down, {passive:true}); b.addEventListener("mousedown", down);
+  ["touchend","touchcancel","mouseup","mouseleave"].forEach(ev => b.addEventListener(ev, up));
+  b.addEventListener("contextmenu", e => e.preventDefault());
+  b.onclick = () => { const all = held; held = false; b.classList.remove("arm"); $("notice").hidden = true; A.retry(all); render(); };
+})();
 
 // ---------- dong chu tu mach ----------
 window.onLine = s => {
@@ -1064,29 +1073,6 @@ render();
     }
   }).catch(() => {});
 })();
-function reloadOnce(){
-  let t = 0; try { t = +sessionStorage.getItem("xe_rl2") || 0; } catch(e){}
-  if (Date.now() - t < 30000) return;            // tranh tai lai lien tuc
-  try { sessionStorage.setItem("xe_rl2", Date.now()); } catch(e){}
-  location.reload();
-}
-// Tu ket noi lai: moi lan mo lai Bluefy, va moi 3 giay khi dang mat ket noi
-if (!window.Android && navigator.bluetooth){
-  const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); else if (A.alive && !A.alive() && A.isUp()) reloadOnce(); };
-  let hiddenAt = 0;
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden"){ hiddenAt = Date.now(); return; }
-    // Mo lai Bluefy ma chua ket noi: tai lai trang (cach nay luon noi duoc)
-    if (hiddenAt && Date.now() - hiddenAt > 2000 && !(typeof demoMode !== "undefined" && demoMode) && $("pasteBox").hidden){
-      // Quay lai tu nen: cho 1.5 giay xem ket noi con song khong; khong nghe mach noi gi -> tai lai trang
-      setTimeout(() => { if (!A.alive()) reloadOnce(); }, 1500);
-      return;
-    }
-    setTimeout(tryAuto, 400);
-  });
-  window.addEventListener("pageshow", () => setTimeout(tryAuto, 400));
-  setInterval(tryAuto, 3000);
-}
 // Ban web: khong tu bat Bluetooth duoc khi chua bam -> hien nut Ket noi
 if (!window.Android){
   if (/[?&]demo/.test(location.search)) startDemo(); else
