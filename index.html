@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:45</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:50</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -438,7 +438,10 @@ const A = window.Android || (() => {
   async function open(){
     if (opening) throw new Error("dang ket noi");
     opening = true;
-    try { return await open2(); } finally { opening = false; }
+    try { return await open2(); }
+    catch(e){ try { if (dev && dev.gatt.connected) dev.gatt.disconnect(); } catch(_){}   // bi tu choi giua chung -> ngat han de lan sau noi lai tu dau
+              throw e; }
+    finally { opening = false; }
   }
   async function open2(){
     clearTimeout(retryT);
