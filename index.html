@@ -123,9 +123,10 @@ body.fullb #home{border-radius:0 0 62px 62px}
 body.fullb #edge{border-radius:0 0 62px 62px}
 /* Vien neon quanh ca man hinh */
 body.full #edge{border-radius:62px}
-#edge{position:fixed;inset:0;z-index:5;pointer-events:none;border-radius:0;border:5px solid rgba(255,255,255,.25);transition:border-color .4s,box-shadow .4s}
-#edge.sg{border-color:#4dff9f;box-shadow:inset 0 0 22px #22e08a,inset 0 0 60px rgba(34,224,138,.45),0 0 30px #22e08a}
-#edge.sr{border-color:#ff4d5c;box-shadow:inset 0 0 22px #ff3b4f,inset 0 0 60px rgba(255,59,79,.45),0 0 30px #ff3b4f}
+#edge{position:fixed;inset:0;z-index:5;pointer-events:none;border-radius:0;border:0;box-shadow:inset 0 0 0 3px rgba(255,255,255,.3),inset 0 0 40px rgba(255,255,255,.18);transition:box-shadow .4s}
+/* Vien neon: sang nhat sat mep man hinh, mo dan vao trong (gap doi ban cu) */
+#edge.sg{box-shadow:inset 0 0 0 4px #6dffb6,inset 0 0 18px 6px #22e08a,inset 0 0 60px 16px rgba(34,224,138,.6),inset 0 0 130px 30px rgba(34,224,138,.28)}
+#edge.sr{box-shadow:inset 0 0 0 4px #ff8a94,inset 0 0 18px 6px #ff3b4f,inset 0 0 60px 16px rgba(255,59,79,.6),inset 0 0 130px 30px rgba(255,59,79,.28)}
 #panel:not([hidden]) ~ #edge, body.pan #edge{display:none}
 .glow{position:absolute;left:18%;right:18%;bottom:13%;height:12%;border-radius:50%;z-index:0;filter:blur(14px);opacity:.0;transition:all .5s}
 .glow.sg{background:#22e08a;opacity:.55}.glow.sr{background:#ff3b4f;opacity:.5}
@@ -186,7 +187,7 @@ body.full #edge{border-radius:62px}
   <div class="state" id="homeState">—</div>
   <div class="notice" id="notice" hidden>
     <b id="noticeTitle"></b><span id="noticeText"></span>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="sm" id="btnRetry">Thử lại</button><button class="sm ghost" id="btnAll" style="color:#14202b">🔍 Hiện tất cả thiết bị</button><button class="sm ghost" id="btnDemo" style="color:#14202b">▶ Chạy thử (không cần xe)</button></div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="sm" id="btnRetry">Thử lại</button><button class="sm ghost" id="btnDemo" style="color:#14202b">▶ Chạy thử (không cần xe)</button></div>
   </div>
   <div class="rbtns">
     <button class="neon g" id="btnMo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>MỞ XE</button>
@@ -208,7 +209,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 18:50</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:00</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -485,11 +486,11 @@ const A = window.Android || (() => {
       try { localStorage.setItem("xe_dev", d.id); } catch(e){}
       dev.addEventListener("gattserverdisconnected", onDisc);
       await open();
-    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA trong danh sách? Bấm \"Hiện tất cả thiết bị\" bên dưới."); }
+    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); else showNotice("Chưa chọn xe", "Không thấy XE-KHOA? Rút điện mạch, bấm Kết nối xe, rồi cắm điện lại: XE-KHOA hiện ra thì chọn ngay."); }
   }
   const api = {
     send(c){ q.push(c); pump(); },
-    retry(){ auto = true; everOk = false; choose(); },   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
+    retry(){ auto = true; everOk = false; choose(true); },   // bam Ket noi: hien tat ca thiet bi xung quanh de chon XE-KHOA   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
     disconnect(){ auto = false; clearTimeout(retryT); if (dev && dev.gatt.connected) dev.gatt.disconnect(); },
     setAuto(b){ auto = !!b; },
     choose,
@@ -1012,7 +1013,6 @@ function startDemo(){
   }, 1000);
 }
 $("btnDemo").onclick = startDemo;
-$("btnAll").onclick = () => { $("notice").hidden = true; A.choose(true); };
 renderKeyEdit();
 render();
 // Tu kiem tra ban moi tren GitHub: Bluefy hay giu ban cu trong bo nho dem -> thay ban moi thi tu tai lai
