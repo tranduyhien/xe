@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:55</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:00</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -517,8 +517,7 @@ const A = window.Android || (() => {
     // Tu ket noi lai (khong can bam): dung thiet bi da chon truoc do
     async autoConnect(){
       if (rx || opening || !auto) return false;
-      if (dev){ try { await open(); return true; } catch(e){ st("paused"); return false; } }
-      return api.tryRemembered();
+      return api.tryRemembered();   // lay lai thiet bi moi tu Bluefy (giong luc tai lai trang)
     },
     isUp(){ return !!rx; },
     async tryRemembered(){
@@ -1063,7 +1062,15 @@ render();
 // Tu ket noi lai: moi lan mo lai Bluefy, va moi 3 giay khi dang mat ket noi
 if (!window.Android && navigator.bluetooth){
   const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); };
-  document.addEventListener("visibilitychange", () => setTimeout(tryAuto, 400));
+  let hiddenAt = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden"){ hiddenAt = Date.now(); return; }
+    // Mo lai Bluefy ma chua ket noi: tai lai trang (cach nay luon noi duoc)
+    if (hiddenAt && Date.now() - hiddenAt > 2000 && A.isUp && !A.isUp() && !(typeof demoMode !== "undefined" && demoMode) && $("pasteBox").hidden){
+      location.reload(); return;
+    }
+    setTimeout(tryAuto, 400);
+  });
   window.addEventListener("pageshow", () => setTimeout(tryAuto, 400));
   setInterval(tryAuto, 3000);
 }
