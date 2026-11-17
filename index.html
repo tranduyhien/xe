@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:05</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 23:10</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -1064,16 +1064,22 @@ render();
     }
   }).catch(() => {});
 })();
+function reloadOnce(){
+  let t = 0; try { t = +sessionStorage.getItem("xe_rl2") || 0; } catch(e){}
+  if (Date.now() - t < 30000) return;            // tranh tai lai lien tuc
+  try { sessionStorage.setItem("xe_rl2", Date.now()); } catch(e){}
+  location.reload();
+}
 // Tu ket noi lai: moi lan mo lai Bluefy, va moi 3 giay khi dang mat ket noi
 if (!window.Android && navigator.bluetooth){
-  const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); else if (A.alive && !A.alive() && A.isUp()) location.reload(); };
+  const tryAuto = () => { if (typeof demoMode !== "undefined" && demoMode) return; if (document.visibilityState !== "visible") return; if (A.isUp && !A.isUp()) A.autoConnect(); else if (A.alive && !A.alive() && A.isUp()) reloadOnce(); };
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden"){ hiddenAt = Date.now(); return; }
     // Mo lai Bluefy ma chua ket noi: tai lai trang (cach nay luon noi duoc)
     if (hiddenAt && Date.now() - hiddenAt > 2000 && !(typeof demoMode !== "undefined" && demoMode) && $("pasteBox").hidden){
       // Quay lai tu nen: cho 1.5 giay xem ket noi con song khong; khong nghe mach noi gi -> tai lai trang
-      setTimeout(() => { if (!A.alive()) location.reload(); }, 1500);
+      setTimeout(() => { if (!A.alive()) reloadOnce(); }, 1500);
       return;
     }
     setTimeout(tryAuto, 400);
