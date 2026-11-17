@@ -158,8 +158,8 @@ body.full #edge{border-radius:62px}
 .sneon.arm{outline:3px solid #fff}
 /* Hang nut KET NOI / CHAY THU duoi nut dieu hoa, cung kich thuoc */
 .sneon{width:150px;min-width:0}
-.sbtns{padding-bottom:10px}
-.sb2{margin-top:0;padding-bottom:22px}
+.sbtns{padding-bottom:22px}
+.sb2{margin-top:-12px;padding-bottom:22px}
 .sneon.k{color:#c9d3ff;border-color:#7c8be0}
 .sneon.k.on{color:#d9fff0;border-color:#4dff9f;box-shadow:0 0 12px #22e08a,inset 0 0 10px rgba(34,224,138,.4)}
 .sneon.d{color:#e8dcb0;border-color:#a8955a}
@@ -220,7 +220,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:10</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 22:15</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -870,7 +870,9 @@ const carKey = () => cfg.ten || curName || "XE-KHOA";
 function renderHome(){
   { const k = $("btnRetry"), on = connected && allowed && !(typeof demoMode !== "undefined" && demoMode);
     k.classList.toggle("on", on); const dm = typeof demoMode !== "undefined" && demoMode; k.textContent = on ? "✓ ĐÃ KẾT NỐI" : (connected && !dm ? "… ĐANG NỐI" : "🔗 KẾT NỐI");
-    $("btnDemo").classList.toggle("on", typeof demoMode !== "undefined" && demoMode); }
+    $("btnDemo").classList.toggle("on", typeof demoMode !== "undefined" && demoMode);
+    document.querySelector(".sb2").style.display = on ? "none" : "";   // da ket noi xe that -> an 2 nut KET NOI / CHAY THU
+  }
   $("carName").textContent = nick(carKey()) || "VF8";
   if ($("carName").dataset.demo) $("carName").textContent += " · CHẠY THỬ";
   const on = connected && allowed;
