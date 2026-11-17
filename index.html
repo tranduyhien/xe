@@ -208,7 +208,7 @@ body.full #edge{border-radius:62px}
 </div>
 
 <div id="panel" hidden>
-<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:10</small></div>
+<div class="ptop"><button id="btnBack">‹ Quay lại</button><b>Cài đặt</b><small style="margin-left:auto;opacity:.8">trang bản 17/11 17:30</small></div>
 <main>
 
   <!-- TRANG THAI -->
@@ -384,7 +384,10 @@ body.full #edge{border-radius:62px}
 const A = window.Android || (() => {
   const SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e", RXU = "6e400002-b5a3-f393-e0a9-e50e24dcca9e", TXU = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   const enc = new TextEncoder(), dec = new TextDecoder();
-  let dev = null, rx = null, buf = "", auto = true, q = [], waiting = false, waitT = 0, everOk = false, retryT = 0;
+  let dev = null, rx = null, txc = null, buf = "", auto = true, q = [], waiting = false, waitT = 0, everOk = false, retryT = 0;
+  let gotAny = false, polling = false, pollT = 0, checkT = 0;
+  const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e){} };
   const st = (s, n) => window.onState && window.onState(s, n || (dev && dev.name) || "");
   function pump(){
     if (waiting || !rx || !q.length) return;
@@ -412,17 +415,40 @@ const A = window.Android || (() => {
     }
     rx = await sv.getCharacteristic(RXU);
     const tx = await sv.getCharacteristic(TXU);
-    tx.addEventListener("characteristicvaluechanged", ev => {
-      buf += dec.decode(ev.target.value);
-      let i; while ((i = buf.indexOf("\n")) >= 0){ const s = buf.slice(0, i).replace(/\r$/, ""); buf = buf.slice(i + 1); if (s) line(s); }
-    });
-    await tx.startNotifications();
-    q = []; waiting = false; buf = "";
+    txc = tx;
+    tx.addEventListener("characteristicvaluechanged", ev => { gotAny = true; feed(dec.decode(ev.target.value)); });
+    try { await tx.startNotifications(); } catch(e){}
+    q = []; waiting = false; buf = ""; gotAny = false;
     st("connected");
-    api.send("xem");
+    if (lsGet("xe_poll") === "1") startPoll();
+    else {
+      api.send("chedo bao"); api.send("xem");
+      // iPhone khong chuyen thong bao (notify) cho trang -> tu chuyen sang che do DOC
+      clearTimeout(checkT); checkT = setTimeout(() => { if (rx && !gotAny) startPoll(); }, 3000);
+    }
+  }
+  function feed(t){
+    buf += t;
+    let i; while ((i = buf.indexOf("\n")) >= 0){ const s = buf.slice(0, i).replace(/\r$/, ""); buf = buf.slice(i + 1); if (s) line(s); }
+  }
+  function startPoll(){
+    polling = true; lsSet("xe_poll", "1");
+    q = []; waiting = false; clearTimeout(waitT);
+    api.send("chedo doc"); api.send("xem");
+    clearTimeout(pollT); poll();
+  }
+  async function poll(){
+    if (!polling || !rx || !txc) return;
+    let next = 350;
+    try {
+      const v = await txc.readValue();
+      const t = dec.decode(v);
+      if (t.length){ gotAny = true; feed(t); next = 40; }
+    } catch(e){ next = 1000; }
+    clearTimeout(pollT); pollT = setTimeout(poll, next);
   }
   function onDisc(){
-    rx = null;
+    rx = null; txc = null; polling = false; clearTimeout(pollT); clearTimeout(checkT);
     if (!auto){ st("paused"); return; }
     if (!everOk){ auto = false; window.onLine && window.onLine("ERR_KHOA"); st("paused"); return; }
     st("disconnected");
