@@ -437,11 +437,11 @@ const A = window.Android || (() => {
       try { localStorage.setItem("xe_dev", d.id); } catch(e){}
       dev.addEventListener("gattserverdisconnected", onDisc);
       await open();
-    } catch(e){ st("paused"); if (!/cancel/i.test(e.message)) showNotice("Chưa kết nối được", e.message); }
+    } catch(e){ st("paused"); const m = (e && (e.message || e.name)) || String(e); if (!/cancel/i.test(m)) showNotice("Chưa kết nối được", m + " — đứng gần xe rồi bấm Kết nối lại."); }
   }
   const api = {
     send(c){ q.push(c); pump(); },
-    retry(){ if (dev){ auto = true; everOk = false; open().catch(e => { st("paused"); showNotice("Chưa kết nối được", "Lại gần xe hơn rồi bấm Kết nối. (" + e.message + ")"); }); } else choose(); },
+    retry(){ auto = true; everOk = false; choose(); },   // nguoi dung bam Ket noi: luon mo danh sach chon (thiet bi nho san co the da hong)
     disconnect(){ auto = false; clearTimeout(retryT); if (dev && dev.gatt.connected) dev.gatt.disconnect(); },
     setAuto(b){ auto = !!b; },
     choose,
